@@ -1,0 +1,15 @@
+[package]
+name = "bc-crunch"
+version = "0.1.0"
+edition = "2024"
+license = "MPL-2.0"
+rust-version = "1.98.1"
+description = "Lossless compression of BC1, BC3, BC4 and BC5 texture blocks"
+readme = "README.md"
+repository = "https://github.com/jhq223/bc-crunch"
+keywords = ["texture", "compression", "bc1", "bc3", "gamedev"]
+categories = ["compression", "game-development", "graphics"]
+publish = ["crates-io"]
+
+[lints.rust]
+unsafe_code = "forbid"
