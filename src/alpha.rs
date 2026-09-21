@@ -75,14 +75,14 @@ struct Models {
     delta: [Model; 16],
 }
 impl Models {
-    fn new() -> Self {
+    fn new<const DECODE: bool>() -> Self {
         Self {
-            colors: std::array::from_fn(|_| Model::new(256)),
-            first: Model::new(8),
-            use_dict: Model::new(2),
-            reference: Model::new(256),
-            indices: std::array::from_fn(|_| Model::new(8)),
-            delta: std::array::from_fn(|_| Model::new(8)),
+            colors: std::array::from_fn(|_| Model::new::<DECODE>(256)),
+            first: Model::new::<DECODE>(8),
+            use_dict: Model::new::<DECODE>(2),
+            reference: Model::new::<DECODE>(256),
+            indices: std::array::from_fn(|_| Model::new::<DECODE>(8)),
+            delta: std::array::from_fn(|_| Model::new::<DECODE>(8)),
         }
     }
 }
@@ -113,7 +113,7 @@ pub(crate) fn encode(encoder: &mut Encoder, input: &[u8], layout: Layout) {
         stride,
         offset,
     } = layout;
-    let mut models = Models::new();
+    let mut models = Models::new::<false>();
     let mut dictionary = [u64::MAX; 256];
     let mut prev = 0;
     for y in 0..rows {
@@ -162,7 +162,7 @@ pub(crate) fn decode(decoder: &mut Decoder<'_>, out: &mut [u8], layout: Layout) 
         stride,
         offset,
     } = layout;
-    let mut models = Models::new();
+    let mut models = Models::new::<true>();
     let mut dictionary = [u64::MAX; 256];
     let mut prev = 0;
     for y in 0..rows {

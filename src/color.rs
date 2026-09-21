@@ -19,15 +19,19 @@ fn table(input: &[u8], stride: usize, offset: usize) -> Vec<u32> {
         .map(|b| read_u32(b, offset + 4))
         .collect();
     values.sort_unstable();
-    let mut counts = Vec::new();
-    let mut at = 0;
-    while at < values.len() {
-        let value = values[at];
-        let end = at + values[at..].partition_point(|&x| x == value);
-        counts.push((end - at, value));
-        at = end;
+    let mut counts: Vec<(usize, u32)> = Vec::new();
+    for value in values {
+        match counts.last_mut() {
+            Some((count, previous)) if *previous == value => *count += 1,
+            _ => counts.push((1, value)),
+        }
     }
-    counts.sort_unstable_by(|a, b| b.0.cmp(&a.0).then(b.1.cmp(&a.1)));
+    // Only the 256 most frequent patterns are needed. Selection preserves the
+    // original frequency/value tie-break without sorting the discarded tail.
+    if counts.len() > 256 {
+        counts.select_nth_unstable_by(256, |a, b| b.0.cmp(&a.0).then(b.1.cmp(&a.1)));
+        counts.truncate(256);
+    }
     let mut top: Vec<_> = counts.into_iter().take(256).map(|(_, v)| v).collect();
     top.sort_unstable();
     top
@@ -40,7 +44,7 @@ pub(crate) fn encode(encoder: &mut Encoder, input: &[u8], layout: Layout) {
         offset,
     } = layout;
     let top = table(input, stride, offset);
-    let mut entry = Model::new(256);
+    let mut entry = Model::new::<false>(256);
     encoder.bits(top.len() as u32 - 1, 8);
     for b in top[0].to_le_bytes() {
         encoder.bits(b as u32, 8);
@@ -50,12 +54,12 @@ pub(crate) fn encode(encoder: &mut Encoder, input: &[u8], layout: Layout) {
             encoder.put(&mut entry, b as u32);
         }
     }
-    let mut colors: [Model; 3] = std::array::from_fn(|_| Model::new(128));
+    let mut colors: [Model; 3] = std::array::from_fn(|_| Model::new::<false>(128));
     let (mut index, mut diff, mut mask, mut reference) = (
-        Model::new(top.len()),
-        Model::new(256),
-        Model::new(16),
-        Model::new(2),
+        Model::new::<false>(top.len()),
+        Model::new::<false>(256),
+        Model::new::<false>(16),
+        Model::new::<false>(2),
     );
     let mut previous = [0u16; 2];
     for y in 0..rows {
@@ -114,7 +118,7 @@ pub(crate) fn decode(decoder: &mut Decoder<'_>, out: &mut [u8], layout: Layout) 
     } = layout;
     let n = decoder.bits(8)? as usize + 1;
     let mut top = [0u32; 256];
-    let mut entry = Model::new(256);
+    let mut entry = Model::new::<true>(256);
     for j in 0..4 {
         top[0] |= decoder.bits(8)? << (j * 8);
     }
@@ -125,12 +129,12 @@ pub(crate) fn decode(decoder: &mut Decoder<'_>, out: &mut [u8], layout: Layout) 
         }
         top[i] = top[i - 1].wrapping_add(v);
     }
-    let mut colors: [Model; 3] = std::array::from_fn(|_| Model::new(128));
+    let mut colors: [Model; 3] = std::array::from_fn(|_| Model::new::<true>(128));
     let (mut index, mut diff, mut mask, mut reference) = (
-        Model::new(n),
-        Model::new(256),
-        Model::new(16),
-        Model::new(2),
+        Model::new::<true>(n),
+        Model::new::<true>(256),
+        Model::new::<true>(16),
+        Model::new::<true>(2),
     );
     let mut previous = [0u16; 2];
     for y in 0..rows {

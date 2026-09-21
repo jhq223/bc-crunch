@@ -13,7 +13,7 @@ pub(crate) struct Model {
     left: u32,
 }
 impl Model {
-    pub(crate) fn new(n: usize) -> Self {
+    pub(crate) fn new<const DECODE: bool>(n: usize) -> Self {
         assert!((1..=256).contains(&n));
         let bits = if n > 16 {
             (usize::BITS - 1 - (n - 1).leading_zeros()).saturating_sub(1)
@@ -23,7 +23,7 @@ impl Model {
         let mut m = Self {
             cdf: vec![0; n],
             counts: vec![1; n],
-            lookup: if bits > 0 {
+            lookup: if DECODE && bits > 0 {
                 vec![0; (1 << bits) + 2]
             } else {
                 vec![]
