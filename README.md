@@ -47,8 +47,8 @@ output on decoding errors. Not every corrupted stream is detectable.
 
 Encoder and decoder state is local to each call. There is no internal thread
 pool; independent textures or tiles can be processed concurrently. Encoding uses
-temporary storage proportional to block count. Decoder model storage is bounded
-independently of image dimensions.
+temporary storage proportional to block count. Decoder models and dictionaries
+use fixed storage without heap allocations.
 
 ## Interoperability
 

@@ -68,11 +68,11 @@ fn insert(dictionary: &mut [u64; 256], v: u64) {
 }
 struct Models {
     colors: [Model; 2],
-    first: Model,
-    use_dict: Model,
+    first: Model<8>,
+    use_dict: Model<2>,
     reference: Model,
-    indices: [Model; 24],
-    delta: [Model; 16],
+    indices: [Model<8>; 24],
+    delta: [Model<8>; 16],
 }
 impl Models {
     fn new<const DECODE: bool>() -> Self {

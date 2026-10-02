@@ -44,7 +44,7 @@ pub(crate) fn encode(encoder: &mut Encoder, input: &[u8], layout: Layout) {
         offset,
     } = layout;
     let top = table(input, stride, offset);
-    let mut entry = Model::new::<false>(256);
+    let mut entry = Model::<256>::new::<false>(256);
     encoder.bits(top.len() as u32 - 1, 8);
     for b in top[0].to_le_bytes() {
         encoder.bits(b as u32, 8);
@@ -54,12 +54,12 @@ pub(crate) fn encode(encoder: &mut Encoder, input: &[u8], layout: Layout) {
             encoder.put(&mut entry, b as u32);
         }
     }
-    let mut colors: [Model; 3] = std::array::from_fn(|_| Model::new::<false>(128));
+    let mut colors: [Model<128>; 3] = std::array::from_fn(|_| Model::new::<false>(128));
     let (mut index, mut diff, mut mask, mut reference) = (
-        Model::new::<false>(top.len()),
-        Model::new::<false>(256),
-        Model::new::<false>(16),
-        Model::new::<false>(2),
+        Model::<256>::new::<false>(top.len()),
+        Model::<256>::new::<false>(256),
+        Model::<16>::new::<false>(16),
+        Model::<2>::new::<false>(2),
     );
     let mut previous = [0u16; 2];
     for y in 0..rows {
@@ -118,7 +118,7 @@ pub(crate) fn decode(decoder: &mut Decoder<'_>, out: &mut [u8], layout: Layout) 
     } = layout;
     let n = decoder.bits(8)? as usize + 1;
     let mut top = [0u32; 256];
-    let mut entry = Model::new::<true>(256);
+    let mut entry = Model::<256>::new::<true>(256);
     for j in 0..4 {
         top[0] |= decoder.bits(8)? << (j * 8);
     }
@@ -129,12 +129,12 @@ pub(crate) fn decode(decoder: &mut Decoder<'_>, out: &mut [u8], layout: Layout) 
         }
         top[i] = top[i - 1].wrapping_add(v);
     }
-    let mut colors: [Model; 3] = std::array::from_fn(|_| Model::new::<true>(128));
+    let mut colors: [Model<128>; 3] = std::array::from_fn(|_| Model::new::<true>(128));
     let (mut index, mut diff, mut mask, mut reference) = (
-        Model::new::<true>(n),
-        Model::new::<true>(256),
-        Model::new::<true>(16),
-        Model::new::<true>(2),
+        Model::<256>::new::<true>(n),
+        Model::<256>::new::<true>(256),
+        Model::<16>::new::<true>(16),
+        Model::<2>::new::<true>(2),
     );
     let mut previous = [0u16; 2];
     for y in 0..rows {

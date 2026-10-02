@@ -3,6 +3,19 @@
 use bc_crunch::{Error, Format, compress, decompress_into};
 const FORMATS: [Format; 4] = [Format::Bc1, Format::Bc3, Format::Bc4, Format::Bc5];
 #[test]
+fn concentrated_models_rescale_over_large_block_grids() {
+    for format in FORMATS {
+        for value in [0, 255] {
+            let raw = vec![value; format.decoded_len(1024, 1024).unwrap()];
+            let stream = compress(1024, 1024, format, &raw).unwrap();
+            let mut restored = vec![0xa5; raw.len()];
+            decompress_into(1024, 1024, format, &stream, &mut restored).unwrap();
+            assert_eq!(restored, raw, "{format:?} {value}");
+        }
+    }
+}
+
+#[test]
 fn upstream_streams_decode_exactly() {
     let fixtures: [(&[u8], &[u8]); 4] = [
         (

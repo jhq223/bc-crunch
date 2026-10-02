@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased
+
+- Decode with fixed-size probability models, removing model heap allocations.
+- Avoid division when decoding small alphabets; compressed streams remain unchanged.
+
 ## 0.1.1
 
 - Avoid building and updating decoder lookup tables during compression.
