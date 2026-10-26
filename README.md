@@ -3,8 +3,8 @@
 English | [简体中文](README.zh-CN.md)
 
 Lossless compression of BC1, BC3, BC4 and BC5 texture blocks. Written in safe Rust,
-with no dependencies. Decompression writes BC blocks into caller-owned
-storage, without decoding them to RGBA.
+with no dependencies. Decompression restores BC blocks directly into caller-owned
+storage.
 
 ## Installation
 
@@ -37,26 +37,26 @@ partial edge blocks, pass the dimensions of the padded block grid. BC1 and BC4
 use eight bytes per block; BC3 and BC5 use sixteen.
 
 Compression preserves every BC byte, including endpoint ordering and selectors.
-It does not add image-quality loss to an already compressed texture. Compressed
-streams may be larger than their input. Applications can retain the original BC
-blocks when compression is not worthwhile.
+Compressed streams may be larger than their input. Applications can store the
+smaller of the compressed stream and the original BC blocks.
 
-The stream has no header or checksum. The container supplies format, dimensions
-and integrity checks. Validate output sizes before allocation and discard partial
-output on decoding errors. Not every corrupted stream is detectable.
+The container supplies the stream's format, dimensions, codec version and checksum.
+Validate output size before allocation and integrity before decoding. Discard
+partial output on decoding errors.
 
-Encoder and decoder state is local to each call. There is no internal thread
-pool; independent textures or tiles can be processed concurrently. Encoding uses
+Encoder and decoder state is local to each call. Applications can schedule
+independent textures or tiles concurrently. Encoding uses
 temporary storage proportional to block count. Decoder models and dictionaries
 use fixed storage without heap allocations.
 
 ## Interoperability
 
-The stream uses range coding and is incompatible with CRN and Huffman streams.
+The stream uses its own range-coded format. CRN and Huffman streams require their
+respective decoders.
 The encoder appends three arithmetic lookahead bytes. When importing a stream
 whose encoder omitted these bytes from its reported length, append three zero
-bytes explicitly. The decoder never reads outside its input slice. Containers
-should record a codec version rather than guessing from raw bytes.
+bytes explicitly. Input reads stay within the supplied slice. Select the decoder
+using the container's codec version.
 
 ## Development
 
@@ -69,8 +69,8 @@ cargo run --release --example profile_codec -- 1024 1024 bc3 tile.bc
 ```
 
 Tests cover external fixtures for all four formats, rectangular and large block
-grids, truncation and malformed inputs. The profiler reads raw BC data without
-a container header, warms up, and reports the median of five runs. Every decoded
+grids, truncation and malformed inputs. The profiler reads a raw BC block array,
+warms up, and reports the median of five runs. Every decoded
 result is verified. Append an output path to save the compressed stream.
 
 ## License
